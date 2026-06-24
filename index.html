@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VEXA AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg-0:#0a0a0c;--bg-1:#111114;--bg-2:#18181d;--bg-3:#1f1f26;
+    --border:#2a2a35;--accent:#7c6af7;--accent-2:#a78bfa;
+    --accent-glow:rgba(124,106,247,0.18);--text-0:#f0effe;
+    --text-1:#b0adc8;--text-2:#6b6880;--danger:#f87171;
+    --success:#34d399;--thinking:#fb923c;--search:#38bdf8;--image:#f472b6;
+    --sidebar-w:270px;--radius:14px;--radius-sm:8px;
+    --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+  }
+  body.light {
+    --bg-0:#f5f4ff;--bg-1:#eeecfd;--bg-2:#e4e1fb;--bg-3:#d8d4f8;
+    --border:#c4bff0;--accent:#7c6af7;--accent-2:#5b47e0;
+    --accent-glow:rgba(124,106,247,0.12);--text-0:#1a1730;
+    --text-1:#3d3760;--text-2:#7a7499;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:var(--bg-0);color:var(--text-0);font-family:var(--font);overflow:hidden;transition:background .3s,color .3s;}
+
+  /* SETTINGS */
+  #settings-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);}
+  #settings-overlay.open{display:flex;align-items:center;justify-content:center;}
+  .settings-card{background:var(--bg-2);border:1px solid var(--border);border-radius:18px;width:340px;max-width:90vw;padding:28px;display:flex;flex-direction:column;gap:22px;animation:slideUp .25s ease;}
+  .settings-card h3{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .settings-section{display:flex;flex-direction:column;gap:12px;}
+  .settings-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2);font-weight:600;}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .settings-row span{font-size:.92rem;color:var(--text-1);}
+  .toggle-switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:var(--bg-3);border-radius:12px;cursor:pointer;transition:background .2s;border:1px solid var(--border);}
+  .toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--text-2);border-radius:50%;transition:.2s;}
+  .toggle-switch input:checked+.toggle-slider{background:var(--accent);border-color:var(--accent);}
+  .toggle-switch input:checked+.toggle-slider:before{transform:translateX(18px);background:#fff;}
+  .settings-info{background:var(--bg-3);border-radius:var(--radius-sm);padding:14px;display:flex;flex-direction:column;gap:6px;}
+  .info-row{display:flex;justify-content:space-between;font-size:.84rem;}
+  .info-row .key{color:var(--text-2);}.info-row .val{color:var(--text-0);font-weight:500;}
+  .settings-divider{height:1px;background:var(--border);}
+  .btn-close-settings{align-self:flex-end;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 18px;color:var(--text-1);font-family:var(--font);font-size:.88rem;cursor:pointer;transition:all .2s;}
+  .btn-close-settings:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* ONBOARDING */
+  #onboarding{position:fixed;inset:0;z-index:999;background:var(--bg-0);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;animation:fadeIn .4s ease;}
+  #onboarding .logo-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;}
+  #onboarding .logo-wrap img{width:88px;height:88px;border-radius:22px;filter:drop-shadow(0 0 22px var(--accent));}
+  #onboarding h1{font-size:2rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,var(--accent-2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  #onboarding p{color:var(--text-1);font-size:.95rem;text-align:center;max-width:300px;line-height:1.6;}
+  #onboarding .input-group{display:flex;flex-direction:column;gap:8px;width:300px;}
+  #onboarding label{font-size:.8rem;color:var(--text-2);font-weight:500;letter-spacing:.05em;text-transform:uppercase;}
+  #onboarding input{background:var(--bg-2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text-0);font-family:var(--font);font-size:.95rem;outline:none;transition:border-color .2s;}
+  #onboarding input:focus{border-color:var(--accent);}
+  #onboarding button{background:linear-gradient(135deg,var(--accent),#9f7aea);border:none;border-radius:var(--radius-sm);padding:13px;color:#fff;font-family:var(--font);font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;}
+  #onboarding button:hover{opacity:.9;}#onboarding button:active{transform:scale(.98);}
+
+  /* LAYOUT */
+  #app{display:none;height:100vh;}
+  #app{display:flex;height:100vh;display:none;}
+
+  /* SIDEBAR */
+  #sidebar{width:var(--sidebar-w);background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1);position:relative;z-index:10;flex-shrink:0;}
+  #sidebar.collapsed{transform:translateX(calc(-1 * var(--sidebar-w)));position:fixed;height:100vh;}
+  .sidebar-header{padding:18px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;flex:1;}
+  .sidebar-logo img{width:32px;height:32px;border-radius:8px;}
+  .sidebar-logo span{font-size:1.05rem;font-weight:700;background:linear-gradient(135deg,var(--accent-2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .btn-new{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;color:var(--text-1);font-family:var(--font);font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;}
+  .btn-new:hover{background:var(--accent-glow);color:var(--accent-2);border-color:var(--accent);}
+  .chat-list{flex:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:3px;}
+  .chat-list::-webkit-scrollbar{width:4px;}.chat-list::-webkit-scrollbar-track{background:transparent;}.chat-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .chat-group-label{font-size:.7rem;color:var(--text-2);text-transform:uppercase;letter-spacing:.08em;padding:8px 8px 4px;font-weight:600;}
+  .chat-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .15s;color:var(--text-1);font-size:.87rem;white-space:nowrap;overflow:hidden;position:relative;}
+  .chat-item:hover{background:var(--bg-3);color:var(--text-0);}
+  .chat-item.active{background:var(--accent-glow);color:var(--accent-2);}
+  .chat-item .chat-title{flex:1;overflow:hidden;text-overflow:ellipsis;}
+  .chat-item .chat-del{opacity:0;background:none;border:none;color:var(--danger);cursor:pointer;font-size:.85rem;padding:2px 4px;border-radius:4px;transition:opacity .15s;}
+  .chat-item:hover .chat-del{opacity:1;}
+  .sidebar-footer{padding:12px;border-top:1px solid var(--border);}
+  .user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-3);border-radius:var(--radius-sm);}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#9f7aea);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;}
+  .user-info{flex:1;overflow:hidden;}
+  .user-name{font-size:.88rem;font-weight:600;color:var(--text-0);}
+  .user-role{font-size:.72rem;color:var(--text-2);}
+  .btn-edit-user{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:.9rem;padding:4px;border-radius:4px;transition:color .2s;}
+  .btn-edit-user:hover{color:var(--accent-2);}
+
+  /* MAIN */
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);background:var(--bg-1);flex-shrink:0;}
+  .btn-toggle-sidebar{background:none;border:none;color:var(--text-1);cursor:pointer;padding:6px;border-radius:var(--radius-sm);font-size:1.2rem;transition:color .2s,background .2s;display:flex;align-items:center;}
+  .btn-toggle-sidebar:hover{color:var(--text-0);background:var(--bg-3);}
+  .topbar-title{flex:1;font-size:1rem;font-weight:600;color:var(--text-0);}
+  .model-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--accent-glow);border:1px solid var(--accent);border-radius:20px;font-size:.78rem;font-weight:600;color:var(--accent-2);}
+  .model-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+
+  /* CHAT AREA */
+  #chat-area{flex:1;overflow-y:auto;padding:24px 0;scroll-behavior:smooth;}
+  #chat-area::-webkit-scrollbar{width:5px;}#chat-area::-webkit-scrollbar-track{background:transparent;}#chat-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .message-wrap{max-width:760px;margin:0 auto;padding:0 24px;}
+  .msg{display:flex;gap:12px;margin-bottom:20px;animation:slideUp .3s ease;}
+  .msg.user{flex-direction:row-reverse;}
+  .msg-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;}
+  .msg.ai .msg-avatar{background:linear-gradient(135deg,var(--accent),#9f7aea);color:#fff;}
+  .msg.user .msg-avatar{background:var(--bg-3);color:var(--text-1);border:1px solid var(--border);}
+  .msg-content{flex:1;max-width:85%;}
+  .msg-meta{font-size:.72rem;color:var(--text-2);margin-bottom:4px;}
+  .msg.user .msg-meta{text-align:right;}
+  .msg-bubble{padding:13px 16px;border-radius:var(--radius);font-size:.93rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+  .msg.ai .msg-bubble{background:var(--bg-2);border:1px solid var(--border);border-bottom-left-radius:4px;}
+  .msg.user .msg-bubble{background:linear-gradient(135deg,var(--accent),#9f7aea);color:#fff;border-bottom-right-radius:4px;}
+  .msg.ai .msg-bubble pre{background:var(--bg-0);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin:10px 0;overflow-x:auto;font-family:var(--mono);font-size:.82rem;}
+  .msg.ai .msg-bubble code{font-family:var(--mono);background:var(--bg-0);padding:2px 6px;border-radius:4px;font-size:.83rem;color:var(--accent-2);}
+  .msg-badge{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;padding:3px 8px;border-radius:10px;margin-bottom:6px;font-weight:500;}
+  .badge-thinking{background:rgba(251,146,60,.15);color:var(--thinking);border:1px solid rgba(251,146,60,.3);}
+  .badge-search{background:rgba(56,189,248,.15);color:var(--search);border:1px solid rgba(56,189,248,.3);}
+  .badge-image{background:rgba(244,114,182,.15);color:var(--image);border:1px solid rgba(244,114,182,.3);}
+  .thinking-dots span{animation:blink 1.2s infinite;}
+  .thinking-dots span:nth-child(2){animation-delay:.2s;}
+  .thinking-dots span:nth-child(3){animation-delay:.4s;}
+
+  /* WELCOME */
+  #welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:40px;text-align:center;}
+  #welcome img{width:72px;height:72px;border-radius:18px;filter:drop-shadow(0 0 18px var(--accent));}
+  #welcome h2{font-size:1.8rem;font-weight:700;}
+  #welcome h2 span{background:linear-gradient(135deg,var(--accent-2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  #welcome p{color:var(--text-1);font-size:.95rem;max-width:420px;line-height:1.6;}
+  .starter-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px;max-width:500px;}
+  .starter-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;text-align:left;transition:all .2s;font-family:var(--font);color:var(--text-1);font-size:.85rem;}
+  .starter-card:hover{background:var(--bg-3);border-color:var(--accent);color:var(--text-0);transform:translateY(-1px);}
+  .starter-card .icon{font-size:1.3rem;margin-bottom:6px;display:block;}
+  .starter-card .label{font-weight:600;font-size:.82rem;margin-bottom:2px;color:var(--text-0);}
+
+  /* INPUT AREA */
+  #input-area{padding:16px 24px 20px;background:var(--bg-1);border-top:1px solid var(--border);flex-shrink:0;}
+  .input-box{max-width:760px;margin:0 auto;}
+  .mode-toggles{display:flex;gap:6px;margin-bottom:10px;}
+  .mode-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-family:var(--font);font-size:.78rem;font-weight:500;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);cursor:pointer;transition:all .2s;}
+  .mode-btn:hover{color:var(--text-0);border-color:var(--text-2);}
+  .mode-btn.active.thinking{background:rgba(251,146,60,.12);border-color:var(--thinking);color:var(--thinking);}
+  .mode-btn.active.search{background:rgba(56,189,248,.12);border-color:var(--search);color:var(--search);}
+  .mode-btn.active.image{background:rgba(244,114,182,.12);border-color:var(--image);color:var(--image);}
+  .input-row{display:flex;gap:10px;align-items:flex-end;background:var(--bg-2);border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 6px 6px 16px;transition:border-color .2s;}
+  .input-row:focus-within{border-color:var(--accent);}
+  #user-input{flex:1;background:none;border:none;outline:none;color:var(--text-0);font-family:var(--font);font-size:.95rem;resize:none;max-height:160px;overflow-y:auto;line-height:1.5;padding:7px 0;min-height:40px;}
+  #user-input::placeholder{color:var(--text-2);}
+  #user-input::-webkit-scrollbar{width:3px;}#user-input::-webkit-scrollbar-thumb{background:var(--border);}
+  .btn-send{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#9f7aea);border:none;border-radius:10px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .1s;flex-shrink:0;}
+  .btn-send:hover{opacity:.85;}.btn-send:active{transform:scale(.93);}.btn-send:disabled{opacity:.3;cursor:not-allowed;}
+  .btn-send svg{width:17px;height:17px;}
+  .input-hint{font-size:.72rem;color:var(--text-2);text-align:center;margin-top:8px;}
+
+  /* IMAGE */
+  .gen-image{max-width:360px;border-radius:var(--radius);border:1px solid var(--border);margin-top:8px;cursor:zoom-in;}
+  #img-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+  #img-modal.open{display:flex;}
+  #img-modal img{max-width:90vw;max-height:90vh;border-radius:var(--radius);}
+  #img-modal-close{position:absolute;top:20px;right:20px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-0);font-size:1.4rem;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+  /* USERNAME MODAL */
+  #username-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);align-items:center;justify-content:center;}
+  #username-modal.open{display:flex;}
+  .modal-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:320px;display:flex;flex-direction:column;gap:16px;}
+  .modal-card h3{font-size:1.05rem;font-weight:600;}
+  .modal-card input{background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text-0);font-family:var(--font);font-size:.93rem;outline:none;transition:border-color .2s;}
+  .modal-card input:focus{border-color:var(--accent);}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+  .btn-cancel{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 16px;color:var(--text-1);font-family:var(--font);font-size:.88rem;cursor:pointer;}
+  .btn-save{background:var(--accent);border:none;border-radius:var(--radius-sm);padding:8px 16px;color:#fff;font-family:var(--font);font-size:.88rem;font-weight:600;cursor:pointer;}
+
+  /* ANIMATIONS */
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+
+  /* MOBILE */
+  @media(max-width:600px){
+    :root{--sidebar-w:85vw;}
+    .starter-grid{grid-template-columns:1fr;}
+    .msg-content{max-width:92%;}
+  }
+  #sidebar-overlay{display:none;position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.5);}
+  #sidebar-overlay.active{display:block;}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="logo-wrap">
+    <img id="logo-onboarding" class="vexa-logo-img" src="" alt="VEXA">
+    <h1>VEXA AI</h1>
+  </div>
+  <p>AI Generasi Baru — Cerdas, Cepat, Adaptif</p>
+  <div class="input-group">
+    <label>Siapa namamu?</label>
+    <input id="username-input" type="text" placeholder="Masukkan nama kamu..." maxlength="30" autocomplete="off">
+    <button onclick="startApp()">Mulai Chat →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img id="sidebar-logo-img" class="vexa-logo-img" src="" alt="V">
+        <span>VEXA</span>
+      </div>
+      <button class="btn-new" onclick="newChat()">＋ Baru</button>
+    </div>
+    <div class="chat-list" id="chat-list"></div>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar-sidebar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name-sidebar">User</div>
+          <div class="user-role">V1 · OpenRouter</div>
+        </div>
+        <button class="btn-edit-user" onclick="openUsernameModal()" title="Edit username">✎</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div class="topbar">
+      <button class="btn-toggle-sidebar" onclick="toggleSidebar()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="topbar-title" id="topbar-title">Chat Baru</span>
+      <div class="model-badge"><div class="model-dot"></div>V1</div>
+      <button class="btn-toggle-sidebar" onclick="openSettings()" title="Pengaturan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <div id="chat-area"></div>
+    <div id="input-area">
+      <div class="input-box">
+        <div class="mode-toggles">
+          <button class="mode-btn thinking" id="btn-thinking" onclick="toggleMode('thinking')">🧠 Thinking</button>
+          <button class="mode-btn search" id="btn-search" onclick="toggleMode('search')">🔍 Search</button>
+          <button class="mode-btn image" id="btn-image" onclick="toggleMode('image')">🎨 Image</button>
+        </div>
+        <div class="input-row">
+          <textarea id="user-input" placeholder="Tanya apa saja..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn-send" id="btn-send" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">VEXA V1 · Powered by OpenRouter · Enter untuk kirim</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-card">
+    <h3>⚙️ Pengaturan</h3>
+    <div class="settings-section">
+      <div class="settings-label">Tampilan</div>
+      <div class="settings-row">
+        <span>🌙 Dark Mode</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-dark" checked onchange="toggleDarkMode(this)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="settings-divider"></div>
+    <div class="settings-section">
+      <div class="settings-label">Tentang VEXA AI</div>
+      <div class="settings-info">
+        <div class="info-row"><span class="key">Nama</span><span class="val">VEXA AI</span></div>
+        <div class="info-row"><span class="key">Model</span><span class="val">V1 (Llama 3.3 8B)</span></div>
+        <div class="info-row"><span class="key">Versi</span><span class="val">1.0.0</span></div>
+        <div class="info-row"><span class="key">Provider</span><span class="val">OpenRouter</span></div>
+        <div class="info-row"><span class="key">Fitur</span><span class="val">Chat · Thinking · Search · Image</span></div>
+        <div class="info-row"><span class="key">Storage</span><span class="val">Lokal (localStorage)</span></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--text-2);line-height:1.6">VEXA AI berjalan sepenuhnya di browser kamu. Semua percakapan disimpan secara lokal.</p>
+    </div>
+    <div class="settings-divider"></div>
+    <div class="settings-section">
+      <div class="settings-label">Data</div>
+      <div class="settings-row">
+        <span style="font-size:.88rem">Hapus semua chat history</span>
+        <button onclick="clearAllChats()" style="background:rgba(248,113,113,.15);border:1px solid var(--danger);border-radius:6px;padding:5px 12px;color:var(--danger);font-family:var(--font);font-size:.8rem;cursor:pointer;">🗑 Hapus</button>
+      </div>
+    </div>
+    <button class="btn-close-settings" onclick="closeSettings()">Tutup</button>
+  </div>
+</div>
+
+<!-- IMAGE MODAL -->
+<div id="img-modal" onclick="closeImgModal()">
+  <button id="img-modal-close">✕</button>
+  <img id="img-modal-img" src="" alt="">
+</div>
+
+<!-- USERNAME MODAL -->
+<div id="username-modal">
+  <div class="modal-card">
+    <h3>✎ Ganti Username</h3>
+    <input id="new-username-input" type="text" placeholder="Username baru..." maxlength="30">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeUsernameModal()">Batal</button>
+      <button class="btn-save" onclick="saveUsername()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════
+const OPENROUTER_API_KEY = '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'; // ← isi di sini
+const OR_MODEL = 'openrouter/auto';   // gratis
+const OR_IMAGE_MODEL = 'sourceful/riverflow-v2.5-pro';
+
+// LOGO — ganti dengan path/URL logo kamu
+const VEXA_LOGO = '1vexa.png'; // contoh: './logo.png'
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let currentUser = '';
+let chats = {};
+let activeChatId = null;
+let modes = { thinking: false, search: false, image: false };
+let isGenerating = false;
+let sidebarOpen = true;
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  applyStoredTheme();
+  loadFromStorage();
+  document.querySelectorAll('.vexa-logo-img').forEach(el => el.src = VEXA_LOGO);
+  if (currentUser) {
+    showApp();
+  } else {
+    document.getElementById('onboarding').style.display = 'flex';
+    document.getElementById('username-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') startApp();
+    });
+  }
+}
+
+function loadFromStorage() {
+  try {
+    currentUser = localStorage.getItem('vexa_user') || '';
+    const stored = localStorage.getItem('vexa_chats');
+    chats = stored ? JSON.parse(stored) : {};
+  } catch(e) { chats = {}; }
+}
+
+function saveToStorage() {
+  localStorage.setItem('vexa_user', currentUser);
+  localStorage.setItem('vexa_chats', JSON.stringify(chats));
+}
+
+// ═══════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════
+function applyStoredTheme() {
+  if (localStorage.getItem('vexa_theme') === 'light') {
+    document.body.classList.add('light');
+  }
+}
+function toggleDarkMode(el) {
+  document.body.classList.toggle('light', !el.checked);
+  localStorage.setItem('vexa_theme', el.checked ? 'dark' : 'light');
+}
+
+// ═══════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('toggle-dark').checked = !document.body.classList.contains('light');
+}
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
+function closeSettingsOutside(e) { if (e.target === document.getElementById('settings-overlay')) closeSettings(); }
+function clearAllChats() {
+  if (!confirm('Yakin hapus semua chat?')) return;
+  chats = {}; activeChatId = null;
+  saveToStorage(); renderChatList(); showWelcome(); closeSettings();
+}
+
+// ═══════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════
+function startApp() {
+  const input = document.getElementById('username-input');
+  const name = input.value.trim();
+  if (!name) { input.focus(); input.style.borderColor = 'var(--danger)'; return; }
+  currentUser = name;
+  saveToStorage();
+  document.getElementById('onboarding').style.display = 'none';
+  showApp();
+}
+
+// ═══════════════════════════════════════════════════
+// SHOW APP
+// ═══════════════════════════════════════════════════
+function showApp() {
+  document.getElementById('app').style.display = 'flex';
+  updateUserUI();
+  renderChatList();
+  const ids = Object.keys(chats);
+  if (ids.length > 0) loadChat(ids[ids.length - 1]);
+  else showWelcome();
+  if (window.innerWidth <= 768) { sidebarOpen = false; applyMobileCollapse(); }
+}
+
+function updateUserUI() {
+  const i = currentUser.charAt(0).toUpperCase();
+  document.getElementById('user-avatar-sidebar').textContent = i;
+  document.getElementById('user-name-sidebar').textContent = currentUser;
+}
+
+// ═══════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('collapsed', !sidebarOpen);
+  ov.classList.toggle('active', sidebarOpen && window.innerWidth <= 768);
+}
+function applyMobileCollapse() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.add('collapsed');
+  sb.style.position = 'fixed'; sb.style.height = '100vh'; sb.style.zIndex = '20';
+}
+
+// ═══════════════════════════════════════════════════
+// CHAT MANAGEMENT
+// ═══════════════════════════════════════════════════
+function genId() { return 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+function newChat() {
+  activeChatId = null;
+  document.getElementById('topbar-title').textContent = 'Chat Baru';
+  showWelcome(); renderChatList();
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+function loadChat(id) {
+  activeChatId = id;
+  const chat = chats[id];
+  if (!chat) return;
+  document.getElementById('topbar-title').textContent = chat.title || 'Chat';
+  renderMessages(chat.messages);
+  renderChatList(); scrollBottom();
+  if (window.innerWidth <= 768) { sidebarOpen = true; toggleSidebar(); }
+}
+
+function deleteChat(id, e) {
+  e.stopPropagation();
+  delete chats[id]; saveToStorage();
+  if (activeChatId === id) { activeChatId = null; showWelcome(); }
+  renderChatList();
+}
+
+function renderChatList() {
+  const el = document.getElementById('chat-list');
+  const ids = Object.keys(chats).reverse();
+  if (!ids.length) { el.innerHTML = '<div class="chat-group-label">Belum ada chat</div>'; return; }
+  const now = new Date();
+  const todayStr = now.toDateString();
+  const yStr = new Date(now - 86400000).toDateString();
+  const groups = { Hari_ini: [], Kemarin: [], Sebelumnya: [] };
+  ids.forEach(id => {
+    const d = new Date(parseInt(id.split('_')[1])).toDateString();
+    if (d === todayStr) groups.Hari_ini.push(id);
+    else if (d === yStr) groups.Kemarin.push(id);
+    else groups.Sebelumnya.push(id);
+  });
+  let html = '';
+  Object.entries(groups).forEach(([g, gids]) => {
+    if (!gids.length) return;
+    html += `<div class="chat-group-label">${g.replace('_',' ')}</div>`;
+    gids.forEach(id => {
+      const chat = chats[id];
+      html += `<div class="chat-item ${id===activeChatId?'active':''}" onclick="loadChat('${id}')">
+        <span class="chat-title">💬 ${escHtml(chat.title||'Chat')}</span>
+        <button class="chat-del" onclick="deleteChat('${id}',event)">✕</button>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════
+// WELCOME
+// ═══════════════════════════════════════════════════
+function showWelcome() {
+  const greet = ['Selamat pagi','Selamat siang','Selamat sore','Selamat malam'][[0,11,15,18].findIndex((h,i,a)=>new Date().getHours()<(a[i+1]||24))-1]||'Halo';
+  document.getElementById('chat-area').innerHTML = `
+    <div id="welcome">
+      <img class="vexa-logo-img" src="${VEXA_LOGO}" alt="VEXA">
+      <h2>${greet}, <span>${escHtml(currentUser)}</span> 👋</h2>
+      <p>Gw VEXA V1 — AI yang siap bantu kamu mikir, cari info, nulis, dan bikin gambar.</p>
+      <div class="starter-grid">
+        <button class="starter-card" onclick="quickSend('Jelaskan konsep machine learning dengan bahasa simpel')">
+          <span class="icon">🤖</span><div class="label">Belajar AI</div><div>Jelaskan machine learning</div>
+        </button>
+        <button class="starter-card" onclick="quickSend('Buat gambar: futuristic city at night, neon lights, cyberpunk')">
+          <span class="icon">🎨</span><div class="label">Buat Gambar</div><div>Kota futuristik cyberpunk</div>
+        </button>
+        <button class="starter-card" onclick="quickSend('Cari informasi terbaru tentang perkembangan AI di 2025')">
+          <span class="icon">🔍</span><div class="label">Cari Info</div><div>Berita terbaru tentang AI</div>
+        </button>
+        <button class="starter-card" onclick="quickSend('Bantu saya debug kode Python ini:\n\ndef hitung(x):\n  return x * 2\nprint(hitung())')">
+          <span class="icon">💻</span><div class="label">Debug Kode</div><div>Bantu perbaiki kode Python</div>
+        </button>
+      </div>
+    </div>`;
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Selamat pagi';
+  if (h < 15) return 'Selamat siang';
+  if (h < 18) return 'Selamat sore';
+  return 'Selamat malam';
+}
+
+function quickSend(text) { document.getElementById('user-input').value = text; sendMessage(); }
+
+// ═══════════════════════════════════════════════════
+// MODE TOGGLES
+// ═══════════════════════════════════════════════════
+function toggleMode(m) {
+  if (m !== 'image') modes.image = false;
+  modes[m] = !modes[m];
+  ['thinking','search','image'].forEach(k => {
+    const btn = document.getElementById('btn-'+k);
+    btn.classList.toggle('active', modes[k]);
+    btn.classList.toggle(k, modes[k]);
+  });
+  const ta = document.getElementById('user-input');
+  if (modes.image) ta.placeholder = '✏️ Describe the image you want...';
+  else if (modes.thinking) ta.placeholder = '🧠 Tanya dengan analisis mendalam...';
+  else if (modes.search) ta.placeholder = '🔍 Cari informasi terbaru...';
+  else ta.placeholder = 'Tanya apa saja...';
+}
+
+// ═══════════════════════════════════════════════════
+// SEND MESSAGE
+// ═══════════════════════════════════════════════════
+function handleKey(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,160)+'px'; }
+
+async function sendMessage() {
+  if (isGenerating) return;
+  const ta = document.getElementById('user-input');
+  const text = ta.value.trim();
+  if (!text) return;
+  ta.value = ''; ta.style.height = 'auto';
+
+  if (!activeChatId) {
+    activeChatId = genId();
+    chats[activeChatId] = { title: text.slice(0,40)+(text.length>40?'…':''), messages: [] };
+  }
+
+  const chat = chats[activeChatId];
+  document.getElementById('topbar-title').textContent = chat.title;
+  document.getElementById('chat-area').innerHTML = '';
+
+  const isImageMode = modes.image || /^(buat gambar|generate image|create image|gambarkan|draw)/i.test(text);
+  const userMsg = { role: 'user', content: text };
+  chat.messages.push(userMsg);
+  appendMessage(userMsg);
+  saveToStorage(); renderChatList();
+
+  isGenerating = true;
+  document.getElementById('btn-send').disabled = true;
+  const typingId = 'typing_' + Date.now();
+  appendTyping(typingId, isImageMode ? '🎨' : modes.thinking ? '🧠' : modes.search ? '🔍' : null);
+
+  try {
+    const aiMsg = isImageMode ? await generateImage(text) : await callOpenRouter(chat.messages);
+    chat.messages.push(aiMsg);
+    removeTyping(typingId);
+    appendMessage(aiMsg);
+    saveToStorage();
+  } catch(err) {
+    removeTyping(typingId);
+    const errMsg = { role: 'ai', content: `❌ Error: ${err.message}\n\nCek API key OpenRouter kamu dan coba lagi.` };
+    chat.messages.push(errMsg);
+    appendMessage(errMsg);
+    saveToStorage();
+  }
+
+  isGenerating = false;
+  document.getElementById('btn-send').disabled = false;
+  scrollBottom();
+}
+
+// ═══════════════════════════════════════════════════
+// OPENROUTER API
+// ═══════════════════════════════════════════════════
+async function callOpenRouter(messages) {
+  const systemPrompt = `Kamu adalah VEXA, AI asisten yang cerdas, friendly, dan helpful.
+Nama kamu VEXA V1. Jawab dalam bahasa yang sama dengan user (Indonesia atau Inggris).
+Kalau user nulis casual/slang Indo (bro, gw, dll), balas dengan gaya yang sama tapi tetap informatif.
+User saat ini bernama: ${currentUser}.
+${modes.thinking ? 'Mode THINKING aktif: berikan analisis mendalam dan step-by-step reasoning sebelum jawaban akhir.' : ''}
+${modes.search ? 'Mode SEARCH aktif: jawab dengan info selengkap mungkin, sertakan konteks waktu dan sumber relevan.' : ''}
+Format jawaban dengan baik. Gunakan markdown untuk code blocks.`;
+
+  const builtMessages = [
+    { role: 'system', content: systemPrompt },
+    ...messages.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
+  ];
+
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://vexa-ai.local',
+      'X-Title': 'VEXA AI'
+    },
+    body: JSON.stringify({
+      model: OR_MODEL,
+      messages: builtMessages,
+      temperature: modes.thinking ? 0.7 : 0.9,
+      max_tokens: modes.thinking ? 4096 : 2048,
+      top_p: 0.95
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const text = data.choices?.[0]?.message?.content || '(Tidak ada respons)';
+  let badge = modes.thinking ? 'thinking' : modes.search ? 'search' : null;
+  return { role: 'ai', content: text, badge };
+}
+
+// ═══════════════════════════════════════════════════
+// IMAGE GENERATION (OpenRouter FLUX)
+// ═══════════════════════════════════════════════════
+async function generateImage(prompt) {
+  const cleanPrompt = prompt.replace(/^(buat gambar|generate image|create image|gambarkan|draw)\s*/i, '');
+
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://vexa-ai.local',
+      'X-Title': 'VEXA AI'
+    },
+    body: JSON.stringify({
+      model: OR_IMAGE_MODEL,
+      messages: [{ role: 'user', content: cleanPrompt }]
+    })
+  });
+
+  if (!resp.ok) {
+    // Fallback ke deskripsi teks
+    const result = await callOpenRouter([{ role: 'user', content: `Deskripsikan secara vivid dan detail seperti apa gambar ini: "${cleanPrompt}"` }]);
+    result.badge = 'image';
+    result.content = `🎨 *Deskripsi visual untuk:* **${cleanPrompt}**\n\n` + result.content;
+    return result;
+  }
+
+  const data = await resp.json();
+  const msg = data.choices?.[0]?.message;
+  const imageUrl = msg?.content?.match(/https?:\/\/\S+/)?.[0]
+    || (typeof msg?.content === 'string' && msg.content.startsWith('data:') ? msg.content : null);
+
+  if (imageUrl) {
+    return { role: 'ai', content: `✨ Gambar berhasil dibuat!\n\n**Prompt:** ${cleanPrompt}`, badge: 'image', imageUrl };
+  }
+
+  // Fallback
+  const result = await callOpenRouter([{ role: 'user', content: `Deskripsikan secara vivid: "${cleanPrompt}"` }]);
+  result.badge = 'image';
+  result.content = `🎨 *Deskripsi visual:* **${cleanPrompt}**\n\n` + result.content;
+  return result;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER MESSAGES
+// ═══════════════════════════════════════════════════
+function renderMessages(messages) {
+  document.getElementById('chat-area').innerHTML = '<div class="message-wrap" id="msg-wrap"></div>';
+  messages.forEach(m => appendMessage(m, false));
+}
+
+function appendMessage(msg, scroll = true) {
+  let wrap = document.getElementById('msg-wrap');
+  if (!wrap) {
+    const area = document.getElementById('chat-area');
+    if (area.querySelector('#welcome')) area.innerHTML = '';
+    area.innerHTML = '<div class="message-wrap" id="msg-wrap"></div>';
+    wrap = document.getElementById('msg-wrap');
+  }
+
+  const isAI = msg.role === 'ai';
+  const initial = isAI ? 'V' : currentUser.charAt(0).toUpperCase();
+  const name = isAI ? 'VEXA V1' : currentUser;
+  const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+  let badgeHtml = '';
+  if (msg.badge === 'thinking') badgeHtml = '<div class="msg-badge badge-thinking">🧠 Deep Thinking</div>';
+  else if (msg.badge === 'search') badgeHtml = '<div class="msg-badge badge-search">🔍 Web Search</div>';
+  else if (msg.badge === 'image') badgeHtml = '<div class="msg-badge badge-image">🎨 Image Gen</div>';
+
+  const imageHtml = msg.imageUrl
+    ? `<img class="gen-image" src="${msg.imageUrl}" alt="Generated" onclick="openImgModal('${msg.imageUrl}')">` : '';
+
+  const formattedContent = isAI ? formatMarkdown(msg.content) : escHtml(msg.content);
+
+  const div = document.createElement('div');
+  div.className = `msg ${isAI ? 'ai' : 'user'}`;
+  div.innerHTML = `
+    <div class="msg-avatar">${initial}</div>
+    <div class="msg-content">
+      <div class="msg-meta">${escHtml(name)} · ${time}</div>
+      ${badgeHtml}
+      <div class="msg-bubble">${formattedContent}${imageHtml}</div>
+    </div>`;
+  wrap.appendChild(div);
+  if (scroll) scrollBottom();
+}
+
+function appendTyping(id, mode) {
+  let wrap = document.getElementById('msg-wrap');
+  if (!wrap) {
+    const area = document.getElementById('chat-area');
+    if (area.querySelector('#welcome')) area.innerHTML = '';
+    area.innerHTML = '<div class="message-wrap" id="msg-wrap"></div>';
+    wrap = document.getElementById('msg-wrap');
+  }
+  const icon = mode === '🎨' ? '🎨' : mode === '🧠' ? '🧠' : mode === '🔍' ? '🔍' : '◆';
+  const label = mode === '🎨' ? 'Generating image' : mode === '🧠' ? 'Thinking deeply' : mode === '🔍' ? 'Searching' : 'VEXA lagi mikir';
+  const div = document.createElement('div');
+  div.id = id; div.className = 'msg ai';
+  div.innerHTML = `
+    <div class="msg-avatar">V</div>
+    <div class="msg-content">
+      <div class="msg-meta">VEXA V1</div>
+      <div class="msg-bubble" style="color:var(--text-2)">${icon} ${label}<span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span></div>
+    </div>`;
+  wrap.appendChild(div);
+  scrollBottom();
+}
+
+function removeTyping(id) { const el = document.getElementById(id); if (el) el.remove(); }
+
+// ═══════════════════════════════════════════════════
+// MARKDOWN
+// ═══════════════════════════════════════════════════
+function formatMarkdown(text) {
+  let h = escHtml(text);
+  h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,lang,code) => `<pre><code>${code.trim()}</code></pre>`);
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/^### (.+)$/gm, '<strong style="font-size:1.05em;display:block;margin:8px 0 4px">$1</strong>');
+  h = h.replace(/^## (.+)$/gm, '<strong style="font-size:1.1em;display:block;margin:10px 0 4px">$1</strong>');
+  h = h.replace(/^# (.+)$/gm, '<strong style="font-size:1.2em;display:block;margin:12px 0 5px">$1</strong>');
+  h = h.replace(/^[\-\*] (.+)$/gm, '• $1');
+  h = h.replace(/\n/g, '<br>');
+  return h;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollBottom() {
+  const area = document.getElementById('chat-area');
+  setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
+}
+
+// ═══════════════════════════════════════════════════
+// USERNAME MODAL
+// ═══════════════════════════════════════════════════
+function openUsernameModal() {
+  document.getElementById('new-username-input').value = currentUser;
+  document.getElementById('username-modal').classList.add('open');
+}
+function closeUsernameModal() { document.getElementById('username-modal').classList.remove('open'); }
+function saveUsername() {
+  const val = document.getElementById('new-username-input').value.trim();
+  if (!val) return;
+  currentUser = val; saveToStorage(); updateUserUI(); closeUsernameModal();
+}
+
+// ═══════════════════════════════════════════════════
+// IMAGE MODAL
+// ═══════════════════════════════════════════════════
+function openImgModal(src) { document.getElementById('img-modal-img').src = src; document.getElementById('img-modal').classList.add('open'); }
+function closeImgModal() { document.getElementById('img-modal').classList.remove('open'); }
+
+// START
+init();
+</script>
+</body>
+</html>
